@@ -20,7 +20,7 @@ int check = 0;
 
 letter  [A-Za-z]
 digit [0-9]
-ID ({letter})({digit}|{letter})*
+ID ({letter})({digit}|{letter}|_)*
 integer 0|[1-9][0-9]*
 E [Ee][+-]?{digit}+
 float {digit}+"."{digit}+
@@ -129,7 +129,7 @@ scientificNotation {digit}+"."{digit}+({E})?
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
     exit(1);
 }
-<STRING_HANDLE>[^"\n\\]+	{
+<STRING_HANDLE>.	{
 	LIST;
 	strncat(stringBuf, yytext, sizeof(stringBuf) - strlen(stringBuf) - 1);
 }
@@ -291,6 +291,7 @@ scientificNotation {digit}+"."{digit}+({E})?
     exit(1);
 }
 
+
 %%
 
 int main( int argc, char **argv )
@@ -309,7 +310,10 @@ int main( int argc, char **argv )
     }
 
     yylex();
-
+    strncat(buf, "\n", sizeof(buf) - strlen(buf) - 1); 
+    if (Opt_Source)
+        printf("%d:%s\n", linenum, buf);
+    ++linenum;
     if (Opt_Statistic)
     {
         // Print frequency table

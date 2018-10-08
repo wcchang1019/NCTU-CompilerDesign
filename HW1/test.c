@@ -1,35 +1,13 @@
-"\""
-#pragma    source        off /*cc*/
-
-
-void main() 
-{    
-   int a;
-   double b;
-#pragma    source      on 
-   string v = "hello world";
-   //#pragma token off //asds"a saad/* "" 
-#pragma   statistic off
-   a = 1+1;
-#pragma   statistic on
-#pragma token on //asdsa saad/* "" 
-   b = 1.23;
-   if (a > 1)   
-   {
-      b = b*1.23e-1;
-#pragma   token off   /* as 
-s * /
-// sas
-"*/
-      a = a+a;
-   }
-#pragma   token on
-}  // saskodpsa . s2e)@@#
-/* sads
-asd
-
-sd
-sadas
-*/
-double  aaaa;
-int aa;
+int main(int argc, char **argv) {
+    a = 0.000055454;
+    a = 0123123.123123; 
+    b = "aa \"bb \\cc";
+    c = 01.23E4;
+    c = 0001.23e4;
+#pragma statistic off
+    c = 00000.0000e-45;
+#pragma token off //comments
+#pragma source off /* comment
+s */
+#pragma statistic on
+}
