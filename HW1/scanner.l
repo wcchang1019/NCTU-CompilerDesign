@@ -18,9 +18,9 @@ int check = 0;
 
 %}
 
-letter  [A-Za-z]
+letter  [A-Za-z_]
 digit [0-9]
-ID ({letter})({digit}|{letter}|_)*
+ID ({letter})({digit}|{letter})*
 integer 0|[1-9][0-9]*
 E [Ee][+-]?{digit}+
 float {digit}+"."{digit}+
