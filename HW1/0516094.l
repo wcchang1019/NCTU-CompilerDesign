@@ -188,11 +188,12 @@ scientificNotation {digit}+"."{digit}+({E})?
 <PRAGMA_SOURCE>"on" {
 	LIST;
 	Opt_Source = 1;
-	
+	BEGIN(INITIAL);
 }
 <PRAGMA_SOURCE>"off" {
 	LIST;
 	Opt_Source = 0;
+	BEGIN(INITIAL);
 }
 <PRAGMA_SOURCE>"/*"  {
 	LIST; 
@@ -203,12 +204,9 @@ scientificNotation {digit}+"."{digit}+({E})?
 	BEGIN(CPP_COMMENT);
 }
 <PRAGMA_SOURCE>\n  { 
-    	LIST;
-    	if (Opt_Source)
-		printf("%d:%s\n", linenum, buf);
-    	++linenum;
-    	buf[0] = '\0';
-	BEGIN(INITIAL);
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+	
 }
 <PRAGMA_SOURCE>. { // Unrecognized character
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
@@ -220,10 +218,12 @@ scientificNotation {digit}+"."{digit}+({E})?
 <PRAGMA_TOKEN>"on" {
 	LIST;
 	Opt_Token = 1;
+	BEGIN(INITIAL);
 }
 <PRAGMA_TOKEN>"off" {
 	LIST;
 	Opt_Token = 0;
+	BEGIN(INITIAL);
 }
 <PRAGMA_TOKEN>"/*"  {
 	LIST; 
@@ -234,12 +234,9 @@ scientificNotation {digit}+"."{digit}+({E})?
 	BEGIN(CPP_COMMENT);
 }
 <PRAGMA_TOKEN>\n  { 
-    	LIST;
-    	if (Opt_Source)
-		printf("%d:%s\n", linenum, buf);
-    	++linenum;
-    	buf[0] = '\0';
-	BEGIN(INITIAL);
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+
 }
 <PRAGMA_TOKEN>. { // Unrecognized character
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
@@ -251,10 +248,12 @@ scientificNotation {digit}+"."{digit}+({E})?
 <PRAGMA_STAT>"on" {
 	LIST;
 	Opt_Statistic = 1;
+	BEGIN(INITIAL);
 }
 <PRAGMA_STAT>"off" {
 	LIST;
 	Opt_Statistic = 0;
+	BEGIN(INITIAL);
 }
 <PRAGMA_STAT>"/*"  {
 	LIST; 
@@ -265,12 +264,8 @@ scientificNotation {digit}+"."{digit}+({E})?
 	BEGIN(CPP_COMMENT);
 }
 <PRAGMA_STAT>\n  { 
-    	LIST;
-    	if (Opt_Source)
-		printf("%d:%s\n", linenum, buf);
-    	++linenum;
-    	buf[0] = '\0';
-	BEGIN(INITIAL);
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
 }
 <PRAGMA_STAT>. { // Unrecognized character
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
