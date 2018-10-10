@@ -22,9 +22,8 @@ letter  [A-Za-z_]
 digit [0-9]
 ID ({letter})({digit}|{letter})*
 integer 0|[1-9][0-9]*
-E [Ee][+-]?{digit}+
 float {digit}+"."{digit}+
-scientificNotation {digit}+"."{digit}+({E})?
+scientificNotation (0*{integer}|{float})[Ee][+-]?{digit}+
 %x C_COMMENT
 %x CPP_COMMENT
 %x STRING_HANDLE
@@ -101,8 +100,8 @@ scientificNotation {digit}+"."{digit}+({E})?
 	}
 }
 
-{float} {tokenString("float", yytext);}
 {scientificNotation} {tokenString("scientific", yytext);}
+{float} {tokenString("float", yytext);}
 {integer} {tokenString("integer", yytext);}
 [\"]			{
 	LIST;
