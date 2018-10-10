@@ -1,4 +1,10 @@
 // print hello world
+#pragma source on //fafaf 
+/*sdfsdfsdfsd
+dsfsdff*/
+#pragma token
+on /*sdfsdfsdfsdfsdf
+sdfsdfsdf*/
 void main()
 {
 int a;

@@ -165,26 +165,29 @@ scientificNotation {digit}+"."{digit}+({E})?
 		BEGIN(INITIAL);
 }
 <CPP_COMMENT>.    {LIST;}
-^"#pragma"	{
+
+^"#pragma"[\t ]+	{
 		LIST;
 		BEGIN(PRAGMA);
 }
 
-<PRAGMA>[ ]	{LIST;}
-<PRAGMA>"source" {
+<PRAGMA>"source"[\t ]+ {
 		LIST;
 		BEGIN(PRAGMA_SOURCE);
 }
-<PRAGMA>"token" {
+<PRAGMA>"token"[\t ]+ {
 		LIST;
 		BEGIN(PRAGMA_TOKEN);
 }
-<PRAGMA>"statistic" {
+<PRAGMA>"statistic"[\t ]+ {
 		LIST;
 		BEGIN(PRAGMA_STAT);
 }
+<PRAGMA>. {
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+}
 
-<PRAGMA_SOURCE>[ ] {LIST;}
 <PRAGMA_SOURCE>"on" {
 	LIST;
 	Opt_Source = 1;
@@ -194,14 +197,6 @@ scientificNotation {digit}+"."{digit}+({E})?
 	LIST;
 	Opt_Source = 0;
 	BEGIN(INITIAL);
-}
-<PRAGMA_SOURCE>"/*"  {
-	LIST; 
-	BEGIN(C_COMMENT); 
-}
-<PRAGMA_SOURCE>"//"  {
-	LIST;
-	BEGIN(CPP_COMMENT);
 }
 <PRAGMA_SOURCE>\n  { 
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
@@ -214,7 +209,6 @@ scientificNotation {digit}+"."{digit}+({E})?
 }
 
 
-<PRAGMA_TOKEN>[ ] {LIST;}
 <PRAGMA_TOKEN>"on" {
 	LIST;
 	Opt_Token = 1;
@@ -224,14 +218,6 @@ scientificNotation {digit}+"."{digit}+({E})?
 	LIST;
 	Opt_Token = 0;
 	BEGIN(INITIAL);
-}
-<PRAGMA_TOKEN>"/*"  {
-	LIST; 
-	BEGIN(C_COMMENT); 
-}
-<PRAGMA_TOKEN>"//"  {
-	LIST;
-	BEGIN(CPP_COMMENT);
 }
 <PRAGMA_TOKEN>\n  { 
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
@@ -244,7 +230,6 @@ scientificNotation {digit}+"."{digit}+({E})?
 }
 
 
-<PRAGMA_STAT>[ ] {LIST;}
 <PRAGMA_STAT>"on" {
 	LIST;
 	Opt_Statistic = 1;
@@ -254,14 +239,6 @@ scientificNotation {digit}+"."{digit}+({E})?
 	LIST;
 	Opt_Statistic = 0;
 	BEGIN(INITIAL);
-}
-<PRAGMA_STAT>"/*"  {
-	LIST; 
-	BEGIN(C_COMMENT); 
-}
-<PRAGMA_STAT>"//"  {
-	LIST;
-	BEGIN(CPP_COMMENT);
 }
 <PRAGMA_STAT>\n  { 
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
