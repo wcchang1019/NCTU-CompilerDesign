@@ -31,6 +31,7 @@ scientificNotation (0*{integer}|{float})[Ee][+-]?{digit}+
 %x PRAGMA_SOURCE
 %x PRAGMA_STAT
 %x PRAGMA_TOKEN
+%x PRAGMA_ON_OFF
 %%
 
 "("	{tokenString("delim", "("); }
@@ -182,25 +183,28 @@ scientificNotation (0*{integer}|{float})[Ee][+-]?{digit}+
 		LIST;
 		BEGIN(PRAGMA_STAT);
 }
+<PRAGMA>\n {
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+}
 <PRAGMA>. {
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
     exit(1);
 }
 
-<PRAGMA_SOURCE>"on" {
+<PRAGMA_SOURCE>"on"[\t ]* {
 	LIST;
 	Opt_Source = 1;
-	BEGIN(INITIAL);
+	BEGIN(PRAGMA_ON_OFF);
 }
-<PRAGMA_SOURCE>"off" {
+<PRAGMA_SOURCE>"off"[\t ]* {
 	LIST;
 	Opt_Source = 0;
-	BEGIN(INITIAL);
+	BEGIN(PRAGMA_ON_OFF);
 }
 <PRAGMA_SOURCE>\n  { 
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
     exit(1);
-	
 }
 <PRAGMA_SOURCE>. { // Unrecognized character
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
@@ -208,47 +212,65 @@ scientificNotation (0*{integer}|{float})[Ee][+-]?{digit}+
 }
 
 
-<PRAGMA_TOKEN>"on" {
+<PRAGMA_TOKEN>"on"[\t ]* {
 	LIST;
 	Opt_Token = 1;
-	BEGIN(INITIAL);
+	BEGIN(PRAGMA_ON_OFF);
 }
-<PRAGMA_TOKEN>"off" {
+<PRAGMA_TOKEN>"off"[\t ]* {
 	LIST;
 	Opt_Token = 0;
-	BEGIN(INITIAL);
+	BEGIN(PRAGMA_ON_OFF);
 }
 <PRAGMA_TOKEN>\n  { 
-    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
-    exit(1);
-
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
 }
 <PRAGMA_TOKEN>. { // Unrecognized character
-    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
-    exit(1);
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
 }
 
 
-<PRAGMA_STAT>"on" {
+<PRAGMA_STAT>"on"[\t ]* {
 	LIST;
 	Opt_Statistic = 1;
-	BEGIN(INITIAL);
+	BEGIN(PRAGMA_ON_OFF);
 }
-<PRAGMA_STAT>"off" {
+<PRAGMA_STAT>"off"[\t ]* {
 	LIST;
 	Opt_Statistic = 0;
-	BEGIN(INITIAL);
+	BEGIN(PRAGMA_ON_OFF);
 }
 <PRAGMA_STAT>\n  { 
-    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
-    exit(1);
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
 }
 <PRAGMA_STAT>. { // Unrecognized character
-    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
-    exit(1);
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
 }
 
-
+<PRAGMA_ON_OFF>"/*"  {
+	LIST; 
+	BEGIN(C_COMMENT); 
+}
+<PRAGMA_ON_OFF>"//" {
+	LIST;
+	BEGIN(CPP_COMMENT);
+}
+<PRAGMA_ON_OFF>\n  { 
+	LIST;
+	if (Opt_Source)
+	printf("%d:%s\n", linenum, buf);
+	++linenum;
+	buf[0] = '\0';
+	BEGIN(INITIAL);
+}
+<PRAGMA_ON_OFF>.  { 
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
+}
 \n {
     LIST;
     if (Opt_Source)
