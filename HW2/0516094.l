@@ -1,137 +1,40 @@
 %{
-#include <bsd/string.h>
+#include <string.h>
 #include "y.tab.h"
+#define LIST                { strncat(buf, yytext, sizeof(buf) - strlen(buf) - 1); }
+#define token(t)            { LIST; if (Opt_Token) printf("<%s>\n", #t); }
+#define tokenString(t, s)   { LIST; if (Opt_Token) printf("<%s:%s>\n", t, s); }
 #define MAX_LINE_LENGTH 257
 #define MAX_ID_LENGTH 257
-#define MAX_STRING_LENGTH 257
-#define LIST                strlcat(buf, yytext, MAX_LINE_LENGTH)
-#define token(t)            {LIST; if (Opt_Token) printf("<%s>\n", #t);}
-#define tokenInteger(t, i)  {LIST; if (Opt_Token) printf("<%s:%d>\n", t, i);}
-#define tokenString(t, s)   {LIST; if (Opt_Token) printf("<%s:%s>\n", t, s);}
 int Opt_Source = 1;
 int Opt_Token = 1;
-int Opt_Statistic =1;
+int Opt_Statistic = 1;
 int linenum = 1;
-int Last_State = 0;
+char stringBuf[MAX_LINE_LENGTH];
 char buf[MAX_LINE_LENGTH];
-char strContent[MAX_STRING_LENGTH];
-typedef struct ids{
-	char id_name[MAX_ID_LENGTH];
-	int freq;
-	struct ids *next;
-} id;
-id *id_head;
-void set(id **, char *);
-id *new_id();
+int id_count = 0;
+int freq[10000]={0}, i = 0;
+char id_name[10000][MAX_ID_LENGTH];
+int check = 0;
+
 %}
 
+letter  [A-Za-z_]
+digit [0-9]
+ID ({letter})({digit}|{letter})*
+integer 0|[1-9][0-9]*
+float {digit}+"."{digit}+
+scientificNotation (0*{integer}|{float})[Ee][+-]?{digit}+
+%x C_COMMENT
+%x CPP_COMMENT
+%x STRING_HANDLE
 %x PRAGMA
-%x SOURCE
-%x TOKEN
-%x STATISTIC
-%x OTHER
-%x STR
-%x STR_ESCAPE
-%x COMMENT
-
+%x PRAGMA_SOURCE
+%x PRAGMA_STAT
+%x PRAGMA_TOKEN
+%x PRAGMA_ON_OFF
 %%
-<INITIAL>[\t ]+	{
-		LIST;
-	}
-^#pragma[\t ]+	{
-		LIST;
-		BEGIN PRAGMA;
-	}
-<PRAGMA>"source"[\t ]+	{
-		LIST;
-		BEGIN SOURCE;
-	}
-<PRAGMA>"token"[\t ]+	{
-		LIST;
-		BEGIN TOKEN;
-	}
-<PRAGMA>"statistic"[\t ]+	{
-		LIST;
-		BEGIN STATISTIC;
-	}
 
-<SOURCE>"on"[\t ]*	{
-		LIST;
-		Opt_Source = 1;
-		BEGIN OTHER;
-	}
-<SOURCE>"off"[\t ]*	{
-		LIST;
-		Opt_Source = 0;
-		BEGIN OTHER;
-	}
-
-<SOURCE>[^\t ]	{
-		//printf("Error at source line %d: %s\n",linenum, yytext);
-                  fprintf(stderr,"Error at line %d: %s\n",linenum,yytext);
-        exit(1);
-	}
-<TOKEN>"on"[\t ]*	{
-		LIST;
-		Opt_Token = 1;
-		BEGIN OTHER;
-	}
-<TOKEN>"off"[\t ]*	{
-		LIST;
-		Opt_Token = 0;
-		BEGIN OTHER;
-	}
-
-<TOKEN>[^\t ]	{
-                 fprintf(stderr,"Error at line %d: %s\n",linenum,yytext);
-        exit(1);
-	}
-
-<STATISTIC>"on"[\t ]*	{
-		LIST;
-		Opt_Statistic = 1;
-		BEGIN OTHER;
-	}
-<STATISTIC>"off"[\t ]*	{
-		LIST;
-		Opt_Statistic = 0;
-		BEGIN OTHER;
-	}
-
-<STATISTIC>[^\t ]	{
-                 fprintf(stderr,"Error at line %d: %s\n",linenum,yytext);
-        exit(1);
-	}
-<OTHER>\/\/[^\n]*	{
-		LIST;
-		
-	}
-<OTHER>"/*"	{
-		LIST;
-        Last_State = OTHER;
-		BEGIN COMMENT;
-	}
-
-<OTHER>\n		{
-		LIST;
-  	      if (Opt_Source)
-  	        printf("%d:%s\n", linenum, buf);
-  	      linenum++;
-  	      buf[0] = '\0';
-		  BEGIN INITIAL;
-	}
-
-<OTHER>[^\n]		{
-                  fprintf(stderr,"Error at line %d: %s\n",linenum,yytext);
-                exit(1);
-
-	}
-
-<PRAGMA>[^\t ]		{
-                  fprintf(stderr,"Error at line %d: %s\n",linenum,yytext);
-                exit(1);
-
-	}
 "("	{
 		tokenString("delim", "(");
 		return '(';
@@ -286,201 +189,245 @@ id *new_id();
 		return RETURN;
 }
 
-0 |
-[1-9][0-9]* {
-		tokenString("integer", yytext);
-		return INTEGERCONST;
+[ \t]+ {LIST;}
+{ID}	{
+	tokenString("id", yytext);
+	return ID;
+	//printf("%s", yytext);
+	if(Opt_Statistic){
+		for(i=1; i<=id_count; i++){
+			if(strcmp(id_name[i], yytext) == 0){
+				freq[i]++;
+				check = 1;
+				break;
+			}	    
+		}
+		if(check == 0){
+			id_count++;
+			freq[id_count]++;
+			strcpy(id_name[id_count], yytext);
+		}
+		check = 0;
 	}
-[0-9]+\.[0-9]+	{
-		tokenString("float", yytext);
-		return FLOATCONST;
-	}
+}
 
-([0-9]+|([0-9]*\.[0-9]+))([eE][-+]?[0-9]+)	{
-		tokenString("scientific", yytext);
-		return FLOATCONST;
-	}
-"\""	{ 
-		LIST;
-                strContent[0] = '\0';
-		BEGIN STR;
-	}
-<STR>"\\"	{
-		LIST;
-		BEGIN STR_ESCAPE;
-	}
-<STR_ESCAPE>\"	{
-		LIST;
-		strlcat (strContent, "\"", MAX_STRING_LENGTH);
-		BEGIN STR;
-	}
-<STR_ESCAPE>n	{
-		LIST;
-		strlcat( strContent, "\\n", MAX_STRING_LENGTH);
-		BEGIN STR;
-	}
-<STR_ESCAPE>t	{
-		LIST;
-		strlcat( strContent, "\\t", MAX_STRING_LENGTH);
-		BEGIN STR;
-	}
-<STR_ESCAPE>\\	{
-		LIST;
-		strlcat( strContent, "\\", MAX_STRING_LENGTH);
-		BEGIN STR;
-	}
-<STR_ESCAPE>\n  {
+{scientificNotation} {tokenString("scientific", yytext);return FLOATCONST;}
+{float} {tokenString("float", yytext);return FLOATCONST;}
+{integer} {tokenString("integer", yytext);return INTEGERCONST;}
+[\"]			{
+	LIST;
+	BEGIN(STRING_HANDLE);
+}
+<STRING_HANDLE>[\"]	{
+	//LIST;
+	tokenString("string", stringBuf);
+	memset(stringBuf, 0, sizeof stringBuf);
+	BEGIN(INITIAL);
+	return STRINGCONST;
+}
+<STRING_HANDLE>[\\][\"]  {
+	LIST;
+	strncat(stringBuf, "\"", sizeof(stringBuf) - strlen(stringBuf) - 1);
+	
+}
+<STRING_HANDLE>[\\]{2}  {
+	LIST;
+	strncat(stringBuf, "\\", sizeof(stringBuf) - strlen(stringBuf) - 1);
+	
+}
+
+<STRING_HANDLE>\n { // string can't contain newline
     fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
     exit(1);
 }
-<STR_ESCAPE>[^\"nt\\]	{
+<STRING_HANDLE>.	{
+	LIST;
+	strncat(stringBuf, yytext, sizeof(stringBuf) - strlen(stringBuf) - 1);
+}
+
+
+"/*"		{
+		LIST; 
+		BEGIN(C_COMMENT); 
+}
+<C_COMMENT>"*/" {
+		LIST; 
+		BEGIN(INITIAL); 
+}
+<C_COMMENT>\n  	{ 
+	    	LIST;
+	    	if (Opt_Source)
+			printf("%d:%s\n", linenum, buf);
+	    	++linenum;
+	    	buf[0] = '\0';
+}
+<C_COMMENT>.    {LIST;}
+
+"//"		{
 		LIST;
-		strlcat( strContent, "\\", MAX_STRING_LENGTH);
-		strlcat( strContent, yytext, MAX_STRING_LENGTH);
-		BEGIN STR;
-	}
-<STR>"\n"	{
-                 fprintf(stderr,"Error at line %d: %s\n",linenum,yytext);
-		exit(1);
-	}
+		BEGIN(CPP_COMMENT);
+}
+<CPP_COMMENT>\n  { 
+	    	LIST;
+	    	if (Opt_Source)
+			printf("%d:%s\n", linenum, buf);
+	    	++linenum;
+	    	buf[0] = '\0';
+		BEGIN(INITIAL);
+}
+<CPP_COMMENT>.    {LIST;}
 
-<STR>\"	{
-		tokenString("string", strContent);
-		BEGIN INITIAL;
-		return STRINGCONST;
-	}
-<STR>[^\\\n\"]	{
+^"#pragma"[\t ]+	{
 		LIST;
-		strlcat( strContent, yytext, MAX_STRING_LENGTH);
-	}
+		BEGIN(PRAGMA);
+}
 
-"/*"	{
+<PRAGMA>"source"[\t ]+ {
 		LIST;
-        Last_State = INITIAL;
-		BEGIN COMMENT;
-	}
-<COMMENT>"\n"	{
+		BEGIN(PRAGMA_SOURCE);
+}
+<PRAGMA>"token"[\t ]+ {
 		LIST;
-		if(Last_State == OTHER)Last_State = INITIAL;
-		if (Opt_Source)
-  	        printf("%d:%s\n", linenum, buf);
-		linenum++;
-                buf[0] = '\0';
-	}
-
-			
-<COMMENT>.	{
+		BEGIN(PRAGMA_TOKEN);
+}
+<PRAGMA>"statistic"[\t ]+ {
 		LIST;
-	}
+		BEGIN(PRAGMA_STAT);
+}
+<PRAGMA>\n {
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+}
+<PRAGMA>. {
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+}
 
-<COMMENT>"*/"	{
-		LIST;
-		BEGIN Last_State;
-	}
+<PRAGMA_SOURCE>"on"[\t ]* {
+	LIST;
+	Opt_Source = 1;
+	BEGIN(PRAGMA_ON_OFF);
+}
+<PRAGMA_SOURCE>"off"[\t ]* {
+	LIST;
+	Opt_Source = 0;
+	BEGIN(PRAGMA_ON_OFF);
+}
+<PRAGMA_SOURCE>\n  { 
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+}
+<PRAGMA_SOURCE>. { // Unrecognized character
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+}
 
-\/\/.*	{
-		LIST;
-	}
 
-\n	{
-  	      LIST;
-  	      if (Opt_Source)
-  	        printf("%d:%s\n", linenum, buf);
-  	      linenum++;
-  	      buf[0] = '\0';
-        }
+<PRAGMA_TOKEN>"on"[\t ]* {
+	LIST;
+	Opt_Token = 1;
+	BEGIN(PRAGMA_ON_OFF);
+}
+<PRAGMA_TOKEN>"off"[\t ]* {
+	LIST;
+	Opt_Token = 0;
+	BEGIN(PRAGMA_ON_OFF);
+}
+<PRAGMA_TOKEN>\n  { 
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
+}
+<PRAGMA_TOKEN>. { // Unrecognized character
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
+}
 
-[a-zA-Z_][a-zA-Z0-9_]{0,255}	{
-		if(Opt_Statistic){
-			set(&id_head,yytext);
-		}
-		tokenString("id",yytext);
-		return ID;
-	}
 
-.	{
-		//printf("Error at wee line %d: %s\n",linenum, yytext);
-                 fprintf(stderr,"Error at line %d: %s\n",linenum, yytext);
-		exit(1);
-	}
+<PRAGMA_STAT>"on"[\t ]* {
+	LIST;
+	Opt_Statistic = 1;
+	BEGIN(PRAGMA_ON_OFF);
+}
+<PRAGMA_STAT>"off"[\t ]* {
+	LIST;
+	Opt_Statistic = 0;
+	BEGIN(PRAGMA_ON_OFF);
+}
+<PRAGMA_STAT>\n  { 
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
+}
+<PRAGMA_STAT>. { // Unrecognized character
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
+}
+
+<PRAGMA_ON_OFF>"/*"  {
+	LIST; 
+	BEGIN(C_COMMENT); 
+}
+<PRAGMA_ON_OFF>"//" {
+	LIST;
+	BEGIN(CPP_COMMENT);
+}
+<PRAGMA_ON_OFF>\n  { 
+	LIST;
+	if (Opt_Source)
+	printf("%d:%s\n", linenum, buf);
+	++linenum;
+	buf[0] = '\0';
+	BEGIN(INITIAL);
+}
+<PRAGMA_ON_OFF>.  { 
+	fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+	exit(1);
+}
+\n {
+    LIST;
+    if (Opt_Source)
+        printf("%d:%s\n", linenum, buf);
+    ++linenum;
+    buf[0] = '\0';
+}
+
+. { // Unrecognized character
+    fprintf(stderr, "Error at line %d: %s\n", linenum, yytext);
+    exit(1);
+}
+
+
 %%
 /*
 int main( int argc, char **argv )
 {
+    if (argc >= 2)
+    {
+        yyin = fopen( argv[1], "r" );
+        if ( NULL == yyin ) {
+            fprintf( stderr, "Cannot open: %s\n", argv[1] );
+            exit(-1);
+        }
+    }
+    else
+    {
+        yyin = stdin;
+    }
 
-	if( argc == 1 )
-	{
-		yyin = stdin;
+    yylex();
+    strncat(buf, "\n", sizeof(buf) - strlen(buf) - 1); 
+    if (Opt_Source)
+        printf("%d:%s\n", linenum, buf);
+    ++linenum;
+    if (Opt_Statistic)
+    {
+        // Print frequency table
+	printf("frequencies of identifiers:\n");
+	for(i=1;i<=id_count;i++){
+		printf("%s	%d\n", id_name[i], freq[i]);	
 	}
-	else if( argc == 2 )
-	{
-		FILE *fp = fopen( argv[1], "r" );
-		if( fp == NULL ) {
-				fprintf( stderr, "Open file error\n" );
-				exit(-1);
-		}
-		yyin = fp;
-	}
-	else
-	{
-	  	fprintf( stderr, "Usage: ./scanner [filename]\n" );
-   		exit(0);
- 	} 
+    }
 
-
-  	id_head = NULL;
-	yylex();
-	
-  	if(Opt_Statistic){
-		printf("frequencies of identifiers:\n");
-		id *offset = id_head;
-		id *tobefree = id_head;
-  		while(offset){
-				printf("%s\t%d\n",offset->id_name, offset->freq);
-    			offset = offset->next;
-  		}
-		//free linked list
-		while(tobefree){
-			offset = tobefree;
-			tobefree = tobefree->next;
-			free(offset);
-		}
-	}
-
-  	exit(0);
+    exit(0);
 }
+
 */
-void set(id **head, char *yytext)
-{
-	id *offset = *head;
-	id *prev = NULL;	
-	if(offset == NULL){
-		*head = new_id();
-		strncpy((*head)->id_name, yytext,strlen(yytext));
-		(*head)->freq = 1;
-	}else{
-		while(offset){
-			if(!strncmp(offset->id_name, yytext, (strlen(yytext)>=strlen(offset->id_name)?strlen(yytext):strlen(offset->id_name)))){
-				offset->freq+=1;
-				break;
-			}
-			prev = offset;
-			offset = offset -> next;
-		}
-		if(!offset){
-			prev->next = new_id();
-			strncpy(prev->next->id_name, yytext, strlen(yytext));
-			prev->next->freq+=1;
-		}
-	}
-}
-id *new_id()
-{
-	id *temp = (id *)malloc(sizeof(id));
-	temp->next = NULL;
-	memset(temp->id_name, 0, 256);
-	temp->freq = 0;
-	return temp;
-}
-			
-
