@@ -1,0 +1,3 @@
+#pragma symbol on
+bool func(int a, float b);
+const int d = 1;
