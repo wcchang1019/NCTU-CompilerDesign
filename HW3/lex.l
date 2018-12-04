@@ -28,6 +28,7 @@ int Opt_Statistic = 0;
 int Opt_Symbol = 0;
 int linenum = 1;
 int level = 0;
+int else_condition = 0;
 char buf[MAX_LINE_LENG];
 char strContent[MAX_LINE_LENG];
 
@@ -255,7 +256,7 @@ id *new_id();
 
 "if"	{tokenString("KW", yytext);	return IF;}
 
-"else"	{tokenString("KW", yytext);	return ELSE;}
+"else"	{tokenString("KW", yytext);	else_condition=1;	return ELSE;}
 
 "true"	{tokenString("KW", yytext);	return TRUE;}
 

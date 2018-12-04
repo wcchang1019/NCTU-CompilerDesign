@@ -43,10 +43,12 @@ extern char buf[256];
 extern int yylex();
 extern int level;
 extern int Opt_Symbol;
+extern int else_condition;
 int yyerror( char *msg );
 void printTable(vector<row> table);
 bool functionCheck(row tmp, vector<row> table);
 void insertRow(row tmp,int level,int control);
+void elseConditionPrint();
 %}
 
 
@@ -441,12 +443,18 @@ var_const_stmt_list : var_const_stmt_list statement{
                     ;
 
 statement : compound_statement
-          | simple_statement
+          | simple_statement{
+		elseConditionPrint();
+	  }
           | conditional_statement
           | while_statement
           | for_statement
-          | function_invoke_statement
-          | jump_statement
+          | function_invoke_statement{
+		elseConditionPrint();
+	  }
+          | jump_statement{
+		elseConditionPrint();
+	  }
           ;     
 
 simple_statement : variable_reference ASSIGN_OP logical_expression SEMICOLON
@@ -455,6 +463,7 @@ simple_statement : variable_reference ASSIGN_OP logical_expression SEMICOLON
                  ;
 
 conditional_statement : IF L_PAREN logical_expression R_PAREN L_BRACE var_const_stmt_list R_BRACE{
+				elseConditionPrint();
 				printTable(symbolTable[int(symbolTable.size())-1]);
 				symbolTable.pop_back();
 		      }
@@ -462,19 +471,29 @@ conditional_statement : IF L_PAREN logical_expression R_PAREN L_BRACE var_const_
                             L_BRACE var_const_stmt_list R_BRACE
                         ELSE
                             L_BRACE var_const_stmt_list R_BRACE{
-				//printTable(symbolTable[int(symbolTable.size())-1]);
-				//symbolTable.pop_back();
+				printTable(symbolTable[int(symbolTable.size())-1]);
+				symbolTable.pop_back();
 		      }
                       ;
 while_statement : WHILE L_PAREN logical_expression R_PAREN
-                    L_BRACE var_const_stmt_list R_BRACE
+                    L_BRACE var_const_stmt_list R_BRACE{
+				elseConditionPrint();
+				printTable(symbolTable[int(symbolTable.size())-1]);
+				symbolTable.pop_back();
+		      }
                 | DO L_BRACE
                     var_const_stmt_list
-                  R_BRACE WHILE L_PAREN logical_expression R_PAREN SEMICOLON
+                  R_BRACE WHILE L_PAREN logical_expression R_PAREN SEMICOLON{
+				elseConditionPrint();
+				printTable(symbolTable[int(symbolTable.size())-1]);
+				symbolTable.pop_back();
+		      }
                 ;
 
 for_statement : FOR L_PAREN initial_expression_list SEMICOLON control_expression_list SEMICOLON increment_expression_list R_PAREN 
-                    L_BRACE var_const_stmt_list R_BRACE
+                    L_BRACE var_const_stmt_list R_BRACE{
+			elseConditionPrint();
+	      }
               ;
 
 initial_expression_list : initial_expression
@@ -578,18 +597,23 @@ dimension : dimension ML_BRACE logical_expression MR_BRACE
 
 
 scalar_type : INT {
+		elseConditionPrint();
 		$$ = $1;
 	    }
             | DOUBLE{
+		elseConditionPrint();
 		$$ = $1;
 	    }
             | STRING{
+		elseConditionPrint();
 		$$ = $1;
 	    }
             | BOOL {
+		elseConditionPrint();
 		$$ = $1;
 	    }
             | FLOAT {
+		elseConditionPrint();
 		$$ = $1;
             }
             ;
@@ -646,7 +670,7 @@ void printTable(vector<row> table){
 		cout << setiosflags( ios::left ) 
 		<< setw(33) << table[i].name 
 		<< setw(11) << table[i].kind 
-		<< setw(12) << table[i].level 
+		<< setw(12) << to_string(table[i].level) + (table[i].level==0?"(global)":"(local)") 
 		<< setw(19) << table[i].type 
 		<< setw(15) << table[i].attribute;
 		printf("\n");
@@ -665,6 +689,8 @@ bool functionCheck(row tmp,vector<row> table){
 }
 
 void insertRow(row tmp,int level,int control){
+	// control 0 : insert front
+	// control 1 : insert back
 	vector<row> singleTable;
 	if(level > int(symbolTable.size())-1){
 		symbolTable.push_back(singleTable);	
@@ -679,4 +705,10 @@ void insertRow(row tmp,int level,int control){
 		symbolTable[level].push_back(tmp);
 	}
 }	
-
+void elseConditionPrint(){
+	if(else_condition){
+		printTable(symbolTable[int(symbolTable.size())-1]);
+		symbolTable.pop_back();
+		else_condition = 0;
+	}
+}
