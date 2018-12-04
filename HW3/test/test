@@ -8,27 +8,35 @@ void main(){
 	bool condition = true;
 	if(y[0] == 0){
 		float x; //outer ’x’ has been hidden in this scope
-		double z;
-		z = 0.1;
-
+		/*double z;
+		z = 0.1;*/
+		float x;
 	}else{
 		if(1){
-			string x2;
-			float if2;
-			int if22;
+			int x3;
+			float if3;
+			int if33;
+			int x3;
 			if(1){
-				string x3;
-				float if3;
-				int if33;
+				int x4;
+				float if4;
+				int if44;
+				int x4;
 			}
 		}
-		int elsexx;
-		double elsexe;
-		string xxx;
-		while(1){
+		/*while(1){
 			int whilex;
 			string whilesss;
+		}*/
+		/*int elsexx;
+		double elsexe;
+		string xxx;*/
+		for(int elsexx=0;elsexx<5;elsexx=elsexx+1){
+			int forx;
+			string sfor;
+
 		}
+
 	}
 
 }

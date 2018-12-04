@@ -49,6 +49,7 @@ void printTable(vector<row> table);
 bool functionCheck(row tmp, vector<row> table);
 void insertRow(row tmp,int level,int control);
 void elseConditionPrint();
+bool errorDection(row tmp,int level);
 %}
 
 
@@ -118,9 +119,8 @@ void elseConditionPrint();
 %%
 
 program : decl_list funct_def decl_and_def_list{
-		for(int i=symbolTable.size()-1;i>=0;i--)
+		for(int i=int(symbolTable.size())-1;i>=0;i--)
 			if(Opt_Symbol) printTable(symbolTable[i]);
-		//printTable(symbolTable[1]);
 	}
         ;
 
@@ -359,7 +359,7 @@ identifier_list : identifier_list COMMA ID{
 			string str($1.text);
 			tmp.name= str;
 			tmpTable.push_back(tmp);
-			tmp = (row){"", "", 0, "", ""};	
+			tmp = (row){"", "", 0, "", ""};
 		}
                 ;
 
@@ -428,17 +428,17 @@ compound_statement : L_BRACE var_const_stmt_list R_BRACE{
                    ;
 
 var_const_stmt_list : var_const_stmt_list statement{
-			//cout << level << endl;
+
 		    }
                     | var_const_stmt_list var_decl{
-			//cout << level << endl;
+
 		    }
                     | var_const_stmt_list const_decl{
-			//cout << level << endl;
+
 		    }
                     |
 		    {
-			//cout << level << endl;
+
 		    }
                     ;
 
@@ -471,6 +471,14 @@ conditional_statement : IF L_PAREN logical_expression R_PAREN L_BRACE var_const_
                             L_BRACE var_const_stmt_list R_BRACE
                         ELSE
                             L_BRACE var_const_stmt_list R_BRACE{
+				/*
+				else{
+					if(){
+					}
+				}
+				is a bug =.=
+				*/
+				elseConditionPrint();
 				printTable(symbolTable[int(symbolTable.size())-1]);
 				symbolTable.pop_back();
 		      }
@@ -493,6 +501,8 @@ while_statement : WHILE L_PAREN logical_expression R_PAREN
 for_statement : FOR L_PAREN initial_expression_list SEMICOLON control_expression_list SEMICOLON increment_expression_list R_PAREN 
                     L_BRACE var_const_stmt_list R_BRACE{
 			elseConditionPrint();
+			printTable(symbolTable[int(symbolTable.size())-1]);
+			symbolTable.pop_back();
 	      }
               ;
 
@@ -666,7 +676,7 @@ void printTable(vector<row> table){
 	printf("%*c", 15, ' ');
 	printf("\n");
 	printf("---------------------------------------------------------------------------------------\n");
-	for(int i=0;i<table.size();i++){
+	for(int i=0;i<int(table.size());i++){
 		cout << setiosflags( ios::left ) 
 		<< setw(33) << table[i].name 
 		<< setw(11) << table[i].kind 
@@ -699,10 +709,13 @@ void insertRow(row tmp,int level,int control){
 		if(Opt_Symbol) printTable(symbolTable[level+1]);
 		symbolTable.pop_back();
 	}
-	if(!control){
-		symbolTable[level].insert(symbolTable[level].begin(), tmp);
-	}else{
-		symbolTable[level].push_back(tmp);
+	if(errorDection(tmp, level)){
+		if(!control){
+			symbolTable[level].insert(symbolTable[level].begin(), tmp);
+		}else{
+			symbolTable[level].push_back(tmp);
+			//cout << symbolTable[level][int(symbolTable[level].size())-1].name << endl;
+		}
 	}
 }	
 void elseConditionPrint(){
@@ -711,4 +724,13 @@ void elseConditionPrint(){
 		symbolTable.pop_back();
 		else_condition = 0;
 	}
+}
+bool errorDection(row tmp,int level){
+	for(int i=0;i<(symbolTable[level].size());i++){
+		if(tmp.name == symbolTable[level][i].name){
+			cout << "##########Error at Line " << linenum << ": " << tmp.name << " redeclared##########" << endl;
+			return false;
+		}	
+	}
+	return true;
 }
