@@ -27,8 +27,10 @@ int Opt_Token = 0;
 int Opt_Statistic = 0;
 int Opt_Symbol = 0;
 int linenum = 1;
+int level = 0;
 char buf[MAX_LINE_LENG];
 char strContent[MAX_LINE_LENG];
+
 typedef struct ids{
 	char id_name[256];
 	int freq;
@@ -193,10 +195,10 @@ id *new_id();
 		tokenString("delim", "]");	yylval.text = strdup(yytext);	return MR_BRACE;
 	}
 "{"	{
-		tokenString("delim", "{");	return L_BRACE;
+		tokenString("delim", "{");	level++;	return L_BRACE;
 	}
 "}"	{
-		tokenString("delim", "}");	return R_BRACE;
+		tokenString("delim", "}");	level--;	return R_BRACE;
 	}
 "+"	{
 		token("+");	return ADD_OP;

@@ -34,17 +34,19 @@ struct row{
 vector<vector<row>> symbolTable;
 row tmp;
 vector<row> tmpTable;
+vector<row> argTable;
 
-int level=0;
 extern int linenum;
 extern FILE *yyin;
 extern char *yytext;
 extern char buf[256];
 extern int yylex();
+extern int level;
+extern int Opt_Symbol;
 int yyerror( char *msg );
 void printTable(vector<row> table);
 bool functionCheck(row tmp, vector<row> table);
-void insertRow(row tmp,int level);
+void insertRow(row tmp,int level,int control);
 %}
 
 
@@ -114,7 +116,9 @@ void insertRow(row tmp,int level);
 %%
 
 program : decl_list funct_def decl_and_def_list{
-		printTable(symbolTable[level]);
+		for(int i=symbolTable.size()-1;i>=0;i--)
+			if(Opt_Symbol) printTable(symbolTable[i]);
+		//printTable(symbolTable[1]);
 	}
         ;
 
@@ -139,17 +143,23 @@ funct_def : scalar_type ID L_PAREN R_PAREN compound_statement{
 		tmp.type = str2;
 		tmp.kind = "function";
 		tmp.level = level;
-		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level);
+		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 	  }
           | scalar_type ID L_PAREN parameter_list R_PAREN compound_statement{
+		for(int i=int(argTable.size())-1;i>=0;i--){
+			insertRow(argTable[i], level+1, 0);
+		}
+		argTable.clear();
 		string str($2.text);
 		tmp.name = str;
 		string str2($1.text);
 		tmp.type = str2;
 		tmp.kind = "function";
 		tmp.level = level;
-		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level);
+		string str3($4.text);
+		tmp.attribute = str3;
+		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 	  }
           | VOID ID L_PAREN R_PAREN compound_statement{
@@ -158,16 +168,22 @@ funct_def : scalar_type ID L_PAREN R_PAREN compound_statement{
 		tmp.type = "void";
 		tmp.kind = "function";
 		tmp.level = level;
-		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level);
+		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 	  }
           | VOID ID L_PAREN parameter_list R_PAREN compound_statement{
+		for(int i=int(argTable.size())-1;i>=0;i--){
+			insertRow(argTable[i], level+1, 0);
+		}
+		argTable.clear();
 		string str($2.text);
 		tmp.name = str;
 		tmp.type = "void";
 		tmp.kind = "function";
 		tmp.level = level;
-		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level);
+		string str2($4.text);
+		tmp.attribute = str2;
+		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 	  }
           ;
@@ -178,7 +194,7 @@ funct_decl : scalar_type ID L_PAREN R_PAREN SEMICOLON{
 		string str2($1.text);
 		tmp.type = str2;
 		tmp.kind = "function";
-		insertRow(tmp, level);
+		insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 	   }
            | scalar_type ID L_PAREN parameter_list R_PAREN SEMICOLON{
@@ -187,15 +203,18 @@ funct_decl : scalar_type ID L_PAREN R_PAREN SEMICOLON{
 		string str2($1.text);
 		tmp.type = str2;
 		tmp.kind = "function";
-		insertRow(tmp, level);
+		string str3($4.text);
+		tmp.attribute = str3;
+		insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
+		argTable.clear();
 	   }
            | VOID ID L_PAREN R_PAREN SEMICOLON{
 		string str($2.text);
 		tmp.name = str;
 		tmp.type = "void";
 		tmp.kind = "function";
-		insertRow(tmp, level);
+		insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 	   }
            | VOID ID L_PAREN parameter_list R_PAREN SEMICOLON{
@@ -203,36 +222,73 @@ funct_decl : scalar_type ID L_PAREN R_PAREN SEMICOLON{
 		tmp.name = str;
 		tmp.type = "void";
 		tmp.kind = "function";
-		insertRow(tmp, level);
+		string str2($4.text);
+		tmp.attribute = str2;
+		insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
+		argTable.clear();
 	   }
            ;
 
 parameter_list : parameter_list COMMA scalar_type ID {
-		string str($3.text);
-		str = ","+str;
-		tmp.attribute += str;
-		//cout << tmp.attribute << endl;
+			string str($3.text);
+			str = ","+str;
+			strcat($$.text, str.c_str());
+
+			row arg;
+			str.erase(str.begin()+0);
+			arg.type = str;
+			string str2($4.text);
+			arg.name = str2;
+			arg.level = level+1;
+			arg.kind = "parameter";
+			argTable.push_back(arg);
 	       }
                | parameter_list COMMA scalar_type ID dim{
-		string str($3.text);
-		str = ","+str;
-		tmp.attribute += str;
-		string str2($5.text);
-		tmp.attribute += str2;
+			string str($3.text);
+			str = ","+str;
+			strcat($$.text, str.c_str());
+			string str2($5.text);
+			strcat($$.text, str2.c_str());
+
+			row arg;
+			str.erase(str.begin()+0);
+			arg.type = str;
+			string str3($4.text);
+			arg.name = str3;
+			arg.level = level+1;
+			arg.kind = "parameter";
+			argTable.push_back(arg);
 	       }
                | scalar_type ID dim{
-		string str($1.text);
-		tmp.attribute += str;
-		string str2($3.text);
-		tmp.attribute += str2;
+			$$.text = $1.text;
+			strcat($$.text, $3.text);
+
+			row arg;
+			string str($2.text);
+			arg.name = str;
+			string str2($$.text);
+			arg.type = str2;
+			arg.level = level+1;
+			arg.kind = "parameter";
+			argTable.push_back(arg);
 	       }
                | scalar_type ID {
-		string str($1.text);
-		tmp.attribute += str;
-		//cout << tmp.attribute << endl;
+			$$.text = $1.text;
+
+			row arg;
+			string str($2.text);
+			arg.name = str;
+			string str2($1.text);
+			arg.type = str2;
+			arg.level = level+1;
+			arg.kind = "parameter";
+			argTable.push_back(arg);
 	       }
                ;
+
+
+
 
 var_decl : scalar_type identifier_list SEMICOLON{
 		for(int i=0;i<tmpTable.size();i++){
@@ -240,7 +296,7 @@ var_decl : scalar_type identifier_list SEMICOLON{
 			tmpTable[i].level = level;
 			string str($1.text);
 			tmpTable[i].type = str + tmpTable[i].type;
-			insertRow(tmpTable[i], level);
+			insertRow(tmpTable[i], level, 1);
 		}
 		tmpTable.clear();
 		tmp = (row){"", "", 0, "", ""};
@@ -317,11 +373,12 @@ const_decl : CONST scalar_type const_list SEMICOLON{
 		for(int i=0;i<tmpTable.size();i++){
 			string str($2.text);
 			tmpTable[i].type = str;
-			insertRow(tmpTable[i], level);
+			insertRow(tmpTable[i], level, 1);
 		}
 		tmpTable.clear();
 		tmp = (row){"", "", 0, "", ""};
 	   }
+	   ;
 
 const_list : const_list COMMA ID ASSIGN_OP literal_const{
 		string str($3.text);
@@ -347,7 +404,7 @@ const_list : const_list COMMA ID ASSIGN_OP literal_const{
 
 dim : dim ML_BRACE INT_CONST MR_BRACE{
 	string str($2.text);
-	str += to_string($3.value);
+	str += ($3.text);
 	string str2($4.text);
 	str += str2;
 	string str3($1.text);
@@ -356,20 +413,31 @@ dim : dim ML_BRACE INT_CONST MR_BRACE{
     }
     | ML_BRACE INT_CONST MR_BRACE{
 	string str($1.text);
-	str += to_string($2.value);
+	str += ($2.text);
 	string str2($3.text);
 	str += str2;
 	strcpy($$.text, str.c_str());
     }
     ;
 
-compound_statement : L_BRACE var_const_stmt_list R_BRACE
+compound_statement : L_BRACE var_const_stmt_list R_BRACE{
+
+		   }
                    ;
 
-var_const_stmt_list : var_const_stmt_list statement 
-                    | var_const_stmt_list var_decl
-                    | var_const_stmt_list const_decl
+var_const_stmt_list : var_const_stmt_list statement{
+			//cout << level << endl;
+		    }
+                    | var_const_stmt_list var_decl{
+			//cout << level << endl;
+		    }
+                    | var_const_stmt_list const_decl{
+			//cout << level << endl;
+		    }
                     |
+		    {
+			//cout << level << endl;
+		    }
                     ;
 
 statement : compound_statement
@@ -386,11 +454,17 @@ simple_statement : variable_reference ASSIGN_OP logical_expression SEMICOLON
                  | READ variable_reference SEMICOLON
                  ;
 
-conditional_statement : IF L_PAREN logical_expression R_PAREN L_BRACE var_const_stmt_list R_BRACE
+conditional_statement : IF L_PAREN logical_expression R_PAREN L_BRACE var_const_stmt_list R_BRACE{
+				printTable(symbolTable[int(symbolTable.size())-1]);
+				symbolTable.pop_back();
+		      }
                       | IF L_PAREN logical_expression R_PAREN 
                             L_BRACE var_const_stmt_list R_BRACE
                         ELSE
-                            L_BRACE var_const_stmt_list R_BRACE
+                            L_BRACE var_const_stmt_list R_BRACE{
+				//printTable(symbolTable[int(symbolTable.size())-1]);
+				//symbolTable.pop_back();
+		      }
                       ;
 while_statement : WHILE L_PAREN logical_expression R_PAREN
                     L_BRACE var_const_stmt_list R_BRACE
@@ -569,7 +643,8 @@ void printTable(vector<row> table){
 	printf("\n");
 	printf("---------------------------------------------------------------------------------------\n");
 	for(int i=0;i<table.size();i++){
-		cout << setiosflags( ios::left ) << setw(33) << table[i].name 
+		cout << setiosflags( ios::left ) 
+		<< setw(33) << table[i].name 
 		<< setw(11) << table[i].kind 
 		<< setw(12) << table[i].level 
 		<< setw(19) << table[i].type 
@@ -589,11 +664,19 @@ bool functionCheck(row tmp,vector<row> table){
 	return true;
 }
 
-void insertRow(row tmp,int level){
+void insertRow(row tmp,int level,int control){
 	vector<row> singleTable;
-	if(level != symbolTable.size()-1){
+	if(level > int(symbolTable.size())-1){
 		symbolTable.push_back(singleTable);	
+	}else if(level < int(symbolTable.size())-1){
+		//cout << level << endl;
+		if(Opt_Symbol) printTable(symbolTable[level+1]);
+		symbolTable.pop_back();
 	}
-	symbolTable[level].push_back(tmp);
-}
+	if(!control){
+		symbolTable[level].insert(symbolTable[level].begin(), tmp);
+	}else{
+		symbolTable[level].push_back(tmp);
+	}
+}	
 
