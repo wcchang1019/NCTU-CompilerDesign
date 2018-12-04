@@ -187,10 +187,10 @@ id *new_id();
 		tokenString("delim", ";");	return SEMICOLON;
 	}
 "["	{
-		tokenString("delim", "["); 	return ML_BRACE;
+		tokenString("delim", "["); 	yylval.text = strdup(yytext);	return ML_BRACE;
 	}
 "]"	{
-		tokenString("delim", "]");	return MR_BRACE;
+		tokenString("delim", "]");	yylval.text = strdup(yytext);	return MR_BRACE;
 	}
 "{"	{
 		tokenString("delim", "{");	return L_BRACE;
@@ -261,19 +261,19 @@ id *new_id();
 
 "for"	{tokenString("KW", yytext);	return FOR;}
 
-"int"	{tokenString("KW", yytext);	return INT;}
+"int"	{tokenString("KW", yytext);	yylval.text = strdup(yytext);	return INT;}
 
-"print"	{tokenString("KW", yytext);	return PRINT;}
+"print"	{tokenString("KW", yytext);	yylval.text = strdup(yytext);	return PRINT;}
 
-"bool"	{tokenString("KW", yytext);	return BOOL;}
+"bool"	{tokenString("KW", yytext);	yylval.text = strdup(yytext);	return BOOL;}
 
-"void"	{tokenString("KW", yytext);	return VOID;}
+"void"	{tokenString("KW", yytext);	yylval.text = strdup(yytext);	return VOID;}
 
-"float"	{tokenString("KW", yytext);	return FLOAT;}
+"float"	{tokenString("KW", yytext);	yylval.text = strdup(yytext);	return FLOAT;}
 
-"double"	{tokenString("KW", yytext);	return DOUBLE;}
+"double"	{tokenString("KW", yytext);	yylval.text = strdup(yytext);	return DOUBLE;}
 
-"string"	{tokenString("KW", yytext);	return STRING;}
+"string"	{tokenString("KW", yytext);	yylval.text = strdup(yytext);	return STRING;}
 
 "continue"	{tokenString("KW", yytext);	return CONTINUE;}
 
@@ -281,18 +281,18 @@ id *new_id();
 
 "return"	{tokenString("KW", yytext);	return RETURN;}
 
-"const"		{tokenString("KW", yytext);	return CONST;}
+"const"		{tokenString("KW", yytext);	yylval.text = strdup(yytext);return CONST;}
 	
 -?0 |
 [1-9][0-9]* {
-		tokenString("integer", yytext);	return INT_CONST;
+		tokenString("integer", yytext);	yylval.text = strdup(yytext); return INT_CONST;
 	}
 [0-9]+\.[0-9]+	{
-		tokenString("float", yytext);	return FLOAT_CONST;
+		tokenString("float", yytext);	yylval.text = strdup(yytext); return FLOAT_CONST;
 	}
 
 ([0-9]+|([0-9]*\.[0-9]+))([eE][-+]?[0-9]+)	{
-		tokenString("scientific", yytext);	return SCIENTIFIC;
+		tokenString("scientific", yytext);	yylval.text = strdup(yytext);	return SCIENTIFIC;
 	}
 "\""	{ 
 		LIST;

@@ -1,3 +1,19 @@
 #pragma symbol on
-bool func(int a, float b);
-const int d = 1;
+bool func(int a[5][10][18], float b);
+const int d = 5552133, x=123, pi=3.14, ss=1.01E+2;
+int xx[10],yy ,zz=100;
+void main(){
+	int x;
+	int y[10];
+
+	if(y[0] == 0){
+		float x; //outer ’x’ has been hidden in this scope
+		double z;
+		z = 0.1;
+	}
+}
+
+bool func(int a[5][10][18], float b){
+	string c = "hello world";
+	return (b <= 1.0);
+}
