@@ -7,13 +7,7 @@
 #include <string>
 #include <string.h>
  
-struct type
-{
-	char* text;
-	int value;
-	double dval;
-};
-#define YYSTYPE type
+
 using namespace std;
 extern "C"
 {
@@ -52,10 +46,15 @@ bool errorDection(row tmp,int level);
 %}
 
 
-%token  ID
-%token  INT_CONST
-%token  FLOAT_CONST
-%token  SCIENTIFIC
+
+%union {
+	char* text;
+}
+%type<text> literal_const scalar_type dim parameter_list
+%token<text>  ID
+%token<text>  INT_CONST
+%token<text>  FLOAT_CONST
+%token<text>  SCIENTIFIC
 %token  STR_CONST
 
 %token  LE_OP
@@ -74,24 +73,24 @@ bool errorDection(row tmp,int level);
 %token  TRUE
 %token  FALSE
 %token  FOR
-%token  INT
-%token  PRINT
-%token  BOOL
-%token  VOID
-%token  FLOAT
-%token  DOUBLE
-%token  STRING
+%token<text>  INT
+%token<text>  PRINT
+%token<text>  BOOL
+%token<text>  VOID
+%token<text>  FLOAT
+%token<text>  DOUBLE
+%token<text>  STRING
 %token  CONTINUE
 %token  BREAK
 %token  RETURN
-%token  CONST
+%token<text>  CONST
 
 %token  L_PAREN
 %token  R_PAREN
 %token  COMMA
 %token  SEMICOLON
-%token  ML_BRACE
-%token  MR_BRACE
+%token<text>  ML_BRACE
+%token<text>  MR_BRACE
 %token  L_BRACE
 %token  R_BRACE
 %token  ADD_OP
@@ -103,6 +102,7 @@ bool errorDection(row tmp,int level);
 %token  LT_OP
 %token  GT_OP
 %token  NOT_OP
+
 
 /*  Program 
     Function 
@@ -138,9 +138,9 @@ decl_and_def_list : decl_and_def_list var_decl
                   ;
 
 funct_def : scalar_type ID L_PAREN R_PAREN compound_statement{
-		string str($2.text);
+		string str($2);
 		tmp.name = str;
-		string str2($1.text);
+		string str2($1);
 		tmp.type = str2;
 		tmp.kind = "function";
 		tmp.level = level;
@@ -152,19 +152,19 @@ funct_def : scalar_type ID L_PAREN R_PAREN compound_statement{
 			insertRow(argTable[i], level+1, 0);
 		}
 		argTable.clear();
-		string str($2.text);
+		string str($2);
 		tmp.name = str;
-		string str2($1.text);
+		string str2($1);
 		tmp.type = str2;
 		tmp.kind = "function";
 		tmp.level = level;
-		string str3($4.text);
+		string str3($4);
 		tmp.attribute = str3;
 		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 	  }
           | VOID ID L_PAREN R_PAREN compound_statement{
-		string str($2.text);
+		string str($2);
 		tmp.name = str;
 		tmp.type = "void";
 		tmp.kind = "function";
@@ -177,12 +177,12 @@ funct_def : scalar_type ID L_PAREN R_PAREN compound_statement{
 			insertRow(argTable[i], level+1, 0);
 		}
 		argTable.clear();
-		string str($2.text);
+		string str($2);
 		tmp.name = str;
 		tmp.type = "void";
 		tmp.kind = "function";
 		tmp.level = level;
-		string str2($4.text);
+		string str2($4);
 		tmp.attribute = str2;
 		if(functionCheck(tmp, symbolTable[level])) insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
@@ -190,28 +190,28 @@ funct_def : scalar_type ID L_PAREN R_PAREN compound_statement{
           ;
 
 funct_decl : scalar_type ID L_PAREN R_PAREN SEMICOLON{
-		string str($2.text);
+		string str($2);
 		tmp.name = str;
-		string str2($1.text);
+		string str2($1);
 		tmp.type = str2;
 		tmp.kind = "function";
 		insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 	   }
            | scalar_type ID L_PAREN parameter_list R_PAREN SEMICOLON{
-		string str($2.text);
+		string str($2);
 		tmp.name = str;
-		string str2($1.text);
+		string str2($1);
 		tmp.type = str2;
 		tmp.kind = "function";
-		string str3($4.text);
+		string str3($4);
 		tmp.attribute = str3;
 		insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
 		argTable.clear();
 	   }
            | VOID ID L_PAREN R_PAREN SEMICOLON{
-		string str($2.text);
+		string str($2);
 		tmp.name = str;
 		tmp.type = "void";
 		tmp.kind = "function";
@@ -219,11 +219,11 @@ funct_decl : scalar_type ID L_PAREN R_PAREN SEMICOLON{
 		tmp = (row){"", "", 0, "", ""};
 	   }
            | VOID ID L_PAREN parameter_list R_PAREN SEMICOLON{
-		string str($2.text);
+		string str($2);
 		tmp.name = str;
 		tmp.type = "void";
 		tmp.kind = "function";
-		string str2($4.text);
+		string str2($4);
 		tmp.attribute = str2;
 		insertRow(tmp, level, 1);
 		tmp = (row){"", "", 0, "", ""};
@@ -232,55 +232,55 @@ funct_decl : scalar_type ID L_PAREN R_PAREN SEMICOLON{
            ;
 
 parameter_list : parameter_list COMMA scalar_type ID {
-			string str($3.text);
+			string str($3);
 			str = ","+str;
-			strcat($$.text, str.c_str());
+			strcat($$, str.c_str());
 
 			row arg;
 			str.erase(str.begin()+0);
 			arg.type = str;
-			string str2($4.text);
+			string str2($4);
 			arg.name = str2;
 			arg.level = level+1;
 			arg.kind = "parameter";
 			argTable.push_back(arg);
 	       }
                | parameter_list COMMA scalar_type ID dim{
-			string str($3.text);
+			string str($3);
 			str = ","+str;
-			strcat($$.text, str.c_str());
-			string str2($5.text);
-			strcat($$.text, str2.c_str());
+			strcat($$, str.c_str());
+			string str2($5);
+			strcat($$, str2.c_str());
 
 			row arg;
 			str.erase(str.begin()+0);
 			arg.type = str;
-			string str3($4.text);
+			string str3($4);
 			arg.name = str3;
 			arg.level = level+1;
 			arg.kind = "parameter";
 			argTable.push_back(arg);
 	       }
                | scalar_type ID dim{
-			$$.text = $1.text;
-			strcat($$.text, $3.text);
+			$$ = $1;
+			strcat($$, $3);
 
 			row arg;
-			string str($2.text);
+			string str($2);
 			arg.name = str;
-			string str2($$.text);
+			string str2($$);
 			arg.type = str2;
 			arg.level = level+1;
 			arg.kind = "parameter";
 			argTable.push_back(arg);
 	       }
                | scalar_type ID {
-			$$.text = $1.text;
+			$$ = $1;
 
 			row arg;
-			string str($2.text);
+			string str($2);
 			arg.name = str;
-			string str2($1.text);
+			string str2($1);
 			arg.type = str2;
 			arg.level = level+1;
 			arg.kind = "parameter";
@@ -295,7 +295,7 @@ var_decl : scalar_type identifier_list SEMICOLON{
 		for(int i=0;i<tmpTable.size();i++){
 			tmpTable[i].kind = "variable";
 			tmpTable[i].level = level;
-			string str($1.text);
+			string str($1);
 			tmpTable[i].type = str + tmpTable[i].type;
 			insertRow(tmpTable[i], level, 1);
 		}
@@ -305,57 +305,57 @@ var_decl : scalar_type identifier_list SEMICOLON{
          ;
 
 identifier_list : identifier_list COMMA ID{
-			string str($3.text);
+			string str($3);
 			tmp.name= str;	
 			tmpTable.push_back(tmp);
 			tmp = (row){"", "", 0, "", ""};	
 		}
                 | identifier_list COMMA ID ASSIGN_OP logical_expression{
-			string str($3.text);
+			string str($3);
 			tmp.name= str;	
 			tmpTable.push_back(tmp);
 			tmp = (row){"", "", 0, "", ""};
 		}
                 | identifier_list COMMA ID dim ASSIGN_OP initial_array{
-			string str($3.text);
+			string str($3);
 			tmp.name= str;
-			string str2($4.text);
-			tmp.type = $4.text;
+			string str2($4);
+			tmp.type = $4;
 			tmpTable.push_back(tmp);
 			tmp = (row){"", "", 0, "", ""};
 		}
                 | identifier_list COMMA ID dim{
-			string str($3.text);
+			string str($3);
 			tmp.name= str;
-			string str2($4.text);
-			tmp.type = $4.text;
+			string str2($4);
+			tmp.type = $4;
 			tmpTable.push_back(tmp);
 			tmp = (row){"", "", 0, "", ""};
 		}
                 | ID dim ASSIGN_OP initial_array{
-			string str($1.text);
+			string str($1);
 			tmp.name= str;
-			string str2($2.text);
-			tmp.type = $2.text;
+			string str2($2);
+			tmp.type = $2;
 			tmpTable.push_back(tmp);
 			tmp = (row){"", "", 0, "", ""};
 		}
                 | ID dim{
-			string str($1.text);
+			string str($1);
 			tmp.name= str;
-			string str2($2.text);
-			tmp.type = $2.text;
+			string str2($2);
+			tmp.type = $2;
 			tmpTable.push_back(tmp);
 			tmp = (row){"", "", 0, "", ""};
 		}
                 | ID ASSIGN_OP logical_expression{
-			string str($1.text);
+			string str($1);
 			tmp.name= str;
 			tmpTable.push_back(tmp);
 			tmp = (row){"", "", 0, "", ""};
 		}
                 | ID{
-			string str($1.text);
+			string str($1);
 			tmp.name= str;
 			tmpTable.push_back(tmp);
 			tmp = (row){"", "", 0, "", ""};
@@ -372,7 +372,7 @@ literal_list : literal_list COMMA logical_expression
 
 const_decl : CONST scalar_type const_list SEMICOLON{
 		for(int i=0;i<tmpTable.size();i++){
-			string str($2.text);
+			string str($2);
 			tmpTable[i].type = str;
 			insertRow(tmpTable[i], level, 1);
 		}
@@ -382,20 +382,20 @@ const_decl : CONST scalar_type const_list SEMICOLON{
 	   ;
 
 const_list : const_list COMMA ID ASSIGN_OP literal_const{
-		string str($3.text);
+		string str($3);
 		tmp.name = str;		
 		tmp.kind = "constant";
 		tmp.level = level;
-		string str2($5.text);
+		string str2($5);
 		tmp.attribute = str2;
 		tmpTable.push_back(tmp);
 	   }
            | ID ASSIGN_OP literal_const{
-		string str($1.text);
+		string str($1);
 		tmp.name = str;		
 		tmp.kind = "constant";
 		tmp.level = level;
-		string str2($3.text);
+		string str2($3);
 		tmp.attribute = str2;
 		tmpTable.push_back(tmp);
 	   }
@@ -404,20 +404,20 @@ const_list : const_list COMMA ID ASSIGN_OP literal_const{
 //array_decl : ID dim;
 
 dim : dim ML_BRACE INT_CONST MR_BRACE{
-	string str($2.text);
-	str += ($3.text);
-	string str2($4.text);
+	string str($2);
+	str += ($3);
+	string str2($4);
 	str += str2;
-	string str3($1.text);
+	string str3($1);
 	str = str3 + str;
-	strcpy($$.text, str.c_str());
+	strcpy($$, str.c_str());
     }
     | ML_BRACE INT_CONST MR_BRACE{
-	string str($1.text);
-	str += ($2.text);
-	string str2($3.text);
+	string str($1);
+	str += ($2);
+	string str2($3);
 	str += str2;
-	strcpy($$.text, str.c_str());
+	strcpy($$, str.c_str());
     }
     ;
 
@@ -621,13 +621,13 @@ literal_const : INT_CONST{
 		$$ = $1;
 	      }
               | STR_CONST{
-		$$ = $1;
+
 	      }
               | TRUE{
-		$$ = $1;
+
 	      }
               | FALSE{
-		$$ = $1;
+		
 	      }
               ;
 

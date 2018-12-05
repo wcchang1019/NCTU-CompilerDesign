@@ -1,11 +1,5 @@
 %{
-struct type
-{
-	char* text;
-	int value;
-	double dval;
-};
-#define YYSTYPE type
+
 #include "y.tab.h"
 extern "C"
 {
