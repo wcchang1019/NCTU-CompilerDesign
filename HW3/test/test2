@@ -1,0 +1,12 @@
+#pragma symbol on
+int main(){
+	int x;
+	while(1){
+
+
+		if(1){
+
+
+		}
+	}
+}

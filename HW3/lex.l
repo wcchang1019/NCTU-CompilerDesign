@@ -15,7 +15,7 @@ extern "C"
 
 
 
-
+extern void elseConditionPrint();
 #define LIST                strcat(buf, yytext)
 #define token(t)            {LIST; if (Opt_Token) printf("<%s>\n", #t);}
 #define tokenInteger(t, i)  {LIST; if (Opt_Token) printf("<%s:%d>\n", t, i);}
@@ -28,7 +28,6 @@ int Opt_Statistic = 0;
 int Opt_Symbol = 0;
 int linenum = 1;
 int level = 0;
-int else_condition = 0;
 char buf[MAX_LINE_LENG];
 char strContent[MAX_LINE_LENG];
 
@@ -256,7 +255,7 @@ id *new_id();
 
 "if"	{tokenString("KW", yytext);	return IF;}
 
-"else"	{tokenString("KW", yytext);	else_condition=1;	return ELSE;}
+"else"	{tokenString("KW", yytext);	elseConditionPrint();	return ELSE;}
 
 "true"	{tokenString("KW", yytext);	return TRUE;}
 

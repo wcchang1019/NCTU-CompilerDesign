@@ -12,30 +12,24 @@ void main(){
 		z = 0.1;*/
 		float x;
 	}else{
-		if(1){
-			int x3;
-			float if3;
-			int if33;
-			int x3;
-			if(1){
-				int x4;
-				float if4;
-				int if44;
-				int x4;
-			}
-		}
-		/*while(1){
-			int whilex;
-			string whilesss;
-		}*/
-		/*int elsexx;
+		int elsexx;
 		double elsexe;
-		string xxx;*/
-		for(int elsexx=0;elsexx<5;elsexx=elsexx+1){
+		string xxx;
+		for(elsexx=0;elsexx<5;elsexx=elsexx+1){
 			int forx;
 			string sfor;
 
 		}
+		if(1){
+			int if1;
+			float if2;
+		}
+
+	}
+	while(1){
+		int whilex;
+		float whilef;
+		string whilexx;
 
 	}
 

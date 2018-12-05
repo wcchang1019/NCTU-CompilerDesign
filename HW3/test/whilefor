@@ -1,14 +1,25 @@
 #pragma source off
 #pragma token off
 #pragma statistic off
+#pragma symbol on
 
 void whilefor()
 {
     bool a;
     while(a){
+    	int ab;
+    	if(1){
+    		int aaa;
+    	}
+    	else{
+    		if(1){
+    			int x;
+    		}
+    	}
     }
 
     do{
+
 
     }while(a);
 }

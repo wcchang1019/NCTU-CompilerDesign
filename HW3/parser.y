@@ -43,7 +43,6 @@ extern char buf[256];
 extern int yylex();
 extern int level;
 extern int Opt_Symbol;
-extern int else_condition;
 int yyerror( char *msg );
 void printTable(vector<row> table);
 bool functionCheck(row tmp, vector<row> table);
@@ -438,22 +437,22 @@ var_const_stmt_list : var_const_stmt_list statement{
 		    }
                     |
 		    {
-
+			insertRow(tmp, level, 1);
 		    }
                     ;
 
 statement : compound_statement
           | simple_statement{
-		elseConditionPrint();
+
 	  }
           | conditional_statement
           | while_statement
           | for_statement
           | function_invoke_statement{
-		elseConditionPrint();
+
 	  }
           | jump_statement{
-		elseConditionPrint();
+
 	  }
           ;     
 
@@ -463,45 +462,34 @@ simple_statement : variable_reference ASSIGN_OP logical_expression SEMICOLON
                  ;
 
 conditional_statement : IF L_PAREN logical_expression R_PAREN L_BRACE var_const_stmt_list R_BRACE{
-				elseConditionPrint();
-				printTable(symbolTable[int(symbolTable.size())-1]);
+				if(Opt_Symbol) printTable(symbolTable[int(symbolTable.size())-1]);
 				symbolTable.pop_back();
 		      }
                       | IF L_PAREN logical_expression R_PAREN 
                             L_BRACE var_const_stmt_list R_BRACE
                         ELSE
                             L_BRACE var_const_stmt_list R_BRACE{
-				/*
-				else{
-					if(){
-					}
-				}
-				is a bug =.=
-				*/
-				elseConditionPrint();
-				printTable(symbolTable[int(symbolTable.size())-1]);
+				if(Opt_Symbol) printTable(symbolTable[int(symbolTable.size())-1]);
 				symbolTable.pop_back();
 		      }
                       ;
 while_statement : WHILE L_PAREN logical_expression R_PAREN
                     L_BRACE var_const_stmt_list R_BRACE{
-				elseConditionPrint();
-				printTable(symbolTable[int(symbolTable.size())-1]);
+				if(Opt_Symbol) printTable(symbolTable[int(symbolTable.size())-1]);
 				symbolTable.pop_back();
 		      }
                 | DO L_BRACE
                     var_const_stmt_list
                   R_BRACE WHILE L_PAREN logical_expression R_PAREN SEMICOLON{
-				elseConditionPrint();
-				printTable(symbolTable[int(symbolTable.size())-1]);
+				if(Opt_Symbol) printTable(symbolTable[int(symbolTable.size())-1]);
 				symbolTable.pop_back();
 		      }
                 ;
 
+
 for_statement : FOR L_PAREN initial_expression_list SEMICOLON control_expression_list SEMICOLON increment_expression_list R_PAREN 
                     L_BRACE var_const_stmt_list R_BRACE{
-			elseConditionPrint();
-			printTable(symbolTable[int(symbolTable.size())-1]);
+			if(Opt_Symbol) printTable(symbolTable[int(symbolTable.size())-1]);
 			symbolTable.pop_back();
 	      }
               ;
@@ -607,23 +595,18 @@ dimension : dimension ML_BRACE logical_expression MR_BRACE
 
 
 scalar_type : INT {
-		elseConditionPrint();
 		$$ = $1;
 	    }
             | DOUBLE{
-		elseConditionPrint();
 		$$ = $1;
 	    }
             | STRING{
-		elseConditionPrint();
 		$$ = $1;
 	    }
             | BOOL {
-		elseConditionPrint();
 		$$ = $1;
 	    }
             | FLOAT {
-		elseConditionPrint();
 		$$ = $1;
             }
             ;
@@ -677,14 +660,19 @@ void printTable(vector<row> table){
 	printf("\n");
 	printf("---------------------------------------------------------------------------------------\n");
 	for(int i=0;i<int(table.size());i++){
-		cout << setiosflags( ios::left ) 
-		<< setw(33) << table[i].name 
-		<< setw(11) << table[i].kind 
-		<< setw(12) << to_string(table[i].level) + (table[i].level==0?"(global)":"(local)") 
-		<< setw(19) << table[i].type 
-		<< setw(15) << table[i].attribute;
-		printf("\n");
-		
+		if(table[i].name != ""){
+			stringstream ss;
+			ss << table[i].level;
+			string str = ss.str();
+
+			cout << setiosflags( ios::left ) 
+			<< setw(33) << table[i].name 
+			<< setw(11) << table[i].kind 
+			<< setw(12) << str + (table[i].level==0?"(global)":"(local)") 
+			<< setw(19) << table[i].type 
+			<< setw(15) << table[i].attribute;
+			printf("\n");
+		}
 	}
 	printf("=======================================================================================\n");
 }
@@ -702,9 +690,10 @@ void insertRow(row tmp,int level,int control){
 	// control 0 : insert front
 	// control 1 : insert back
 	vector<row> singleTable;
-	if(level > int(symbolTable.size())-1){
+	while(level > int(symbolTable.size())-1){
 		symbolTable.push_back(singleTable);	
-	}else if(level < int(symbolTable.size())-1){
+	}
+  	if(level < int(symbolTable.size())-1){
 		//cout << level << endl;
 		if(Opt_Symbol) printTable(symbolTable[level+1]);
 		symbolTable.pop_back();
@@ -719,18 +708,15 @@ void insertRow(row tmp,int level,int control){
 	}
 }	
 void elseConditionPrint(){
-	if(else_condition){
-		printTable(symbolTable[int(symbolTable.size())-1]);
-		symbolTable.pop_back();
-		else_condition = 0;
-	}
+	if(Opt_Symbol) printTable(symbolTable[int(symbolTable.size())-1]);
+	symbolTable.pop_back();
 }
 bool errorDection(row tmp,int level){
 	for(int i=0;i<(symbolTable[level].size());i++){
-		if(tmp.name == symbolTable[level][i].name){
+		if(tmp.name == symbolTable[level][i].name && tmp.name != ""){
 			cout << "##########Error at Line " << linenum << ": " << tmp.name << " redeclared##########" << endl;
 			return false;
-		}	
+		}
 	}
 	return true;
 }
