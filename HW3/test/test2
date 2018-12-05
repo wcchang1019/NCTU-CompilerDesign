@@ -5,8 +5,9 @@ int main(){
 
 
 		if(1){
-
-
+			int ifxxx;
+		}else{
+			int elsesss;
 		}
 	}
 }

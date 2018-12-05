@@ -31,7 +31,7 @@ struct row{
 	string attribute;
 };
 
-vector<vector<row>> symbolTable;
+vector<vector<row> > symbolTable;
 row tmp;
 vector<row> tmpTable;
 vector<row> argTable;
