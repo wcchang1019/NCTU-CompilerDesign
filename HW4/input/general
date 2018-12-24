@@ -1,0 +1,7 @@
+int a(){
+	int a;
+	int b;
+	int c;
+	a = a + v;
+	int x = 0;
+}

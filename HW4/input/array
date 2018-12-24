@@ -1,0 +1,22 @@
+//#pragma symbol on
+
+int foo(int a[5][5], int b[5][3], int i) {
+	print a[1][1];
+	a[1][1] = 10;
+	a[0][0] = i; // legal
+	i = a[1][1]; // legal
+	a[0][1] = b[1][2]; // legal
+	int k = a[3][i]; // legal : note that bounds are not checked
+	i = 3+a[0]; // illegal : array arithmetic
+	a = b; // illegal : array assignment
+	a[1] = b[2]; // illegal : array assignment
+	return a[0][0]; // legal : ’a[0][0]’ is a scalar type, but ’a’ is an array type.
+}
+
+void foo(){
+	int a[3] = {1,2,3}; // legal
+	int b[4] = {1,2,3,4,5}; // illegal
+	int c[2][3] = {1,2,3,4,5,6,7}; // illegal
+	int d[5] = {1}; // legal
+	int e = "This is a string"; // illegal
+}

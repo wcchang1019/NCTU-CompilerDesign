@@ -1,0 +1,14 @@
+#pragma source off
+#pragma token off
+#pragma statistic off
+//#pragma symbol on
+int func(int a[1][11], int b[1]);
+int fool();
+int abc();
+int efg(int a, int b);
+int func(int ii[1][11], int b[1]){
+	int ii;
+	b();
+	return 11;
+	return 5888;
+}

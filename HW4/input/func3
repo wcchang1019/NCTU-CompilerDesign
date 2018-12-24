@@ -1,0 +1,6 @@
+float f1(){
+return 5;
+}
+int f2(){
+f1();
+}

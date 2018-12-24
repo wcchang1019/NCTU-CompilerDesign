@@ -1,0 +1,47 @@
+//#pragma symbol on
+int main(int a, int b){
+	/*int c=1+2;
+	const int c = 1;
+	float xx = 8;
+	c = c + xx;
+	if(c){
+
+	}else{
+
+	}
+
+	if(3){
+
+
+
+	}
+
+	do{
+
+
+	}while(111);
+
+
+	while(11111 == 111111){
+
+
+
+
+	}*/
+	int i;
+	for(i=0;i=8;i=i+1){
+		int a,b,c;
+		if(a == 1){
+			a = 1;
+			b = 100;
+			c = 5555;
+			i =55555;
+			xx = 10;
+			break;
+
+		}
+
+	}
+	int aaa = b + 55.123;
+
+}

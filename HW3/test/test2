@@ -1,13 +1,5 @@
 #pragma symbol on
-int main(){
+int main(int a){
 	int x;
-	while(1){
 
-
-		if(1){
-			int ifxxx;
-		}else{
-			int elsesss;
-		}
-	}
 }
