@@ -3,6 +3,8 @@
 #include<stdio.h>
 #include"symtable.h"
 #include <vector>
+#include <string>
+#include <iostream>
 using namespace std;
 extern int linenum;
 extern int error;
@@ -853,9 +855,10 @@ BTYPE checkIDdect(struct SymTable* table, const char* name)
 void assignTypeCheck(BTYPE t1, BTYPE t2)
 {
 	bool a = false;
-	if(t1 == t2 || t2 == unknown)
+	if(t1 == t2)
 	{
 		if(t1 == array && t2 == array) a = true;
+		if(t1 == unknown && t2 == unknown) a = true;
 
 	}else if(t1 == DOUBLE_t)
 	{
@@ -887,6 +890,42 @@ void assignTypeCheck(BTYPE t1, BTYPE t2)
 	}
 
 }
+void declAssignTypeCheck(BTYPE t1, BTYPE t2)
+{
+	bool a = false;
+	if(t1 == t2 || t2 == unknown)
+	{
+		if(t1 == array && t2 == array) a = true;
+		
+	}else if(t1 == DOUBLE_t)
+	{
+		if(t2 == DOUBLE_t || t2 == FLOAT_t || t2 == INT_t){
+		
+		}else{
+			a = true;	
+		}	
+
+	}else if(t1 == FLOAT_t)
+	{
+		if(t2 == FLOAT_t || t2 == INT_t){
+		
+		}else{
+			a = true;	
+		}	
+
+	}else{
+		a = true;	
+	}
+	if(a){
+		error = 1;
+		printf("##########Error at Line %d: ", linenum);
+		printf("type ");
+		printBTYPE(t2);
+		printf(" can't assign to type ");
+		printBTYPE(t1);
+		printf(".##########\n");
+	}
+}
 bool arrayDimCheck(BTYPE t1){
 	if(t1 == INT_t)
 	{
@@ -903,7 +942,7 @@ bool arrayDimCheck(BTYPE t1){
 	}
 
 }
-void redeclareCheck(struct SymTable* table, const char* name)
+bool redeclareCheck(struct SymTable* table, const char* name)
 {
 	struct SymTableNode *entry;
 	entry = table->head;
@@ -914,10 +953,12 @@ void redeclareCheck(struct SymTable* table, const char* name)
 			printf("##########Error at Line %d: ", linenum);
 			printf("%s ", name);
 			printf("is redeclared in this scope.##########\n");
+			return true;
 			break;							
 		}
 		entry = entry->next;
 	}
+	return false;
 
 }
 void conditionalStatementBoolCheck(BTYPE t1, int logical_expression_num){
@@ -932,7 +973,7 @@ void conditionalStatementBoolCheck(BTYPE t1, int logical_expression_num){
 
 
 }
-void breakContinueCheck(bool loop)
+void breakContinueCheck(int loop)
 {
 	if(!loop){
 		error = 1;
@@ -1149,11 +1190,18 @@ void functRedef(const char* name){
 	printf("%s ", name);
 	printf("is redefined.##########\n");	
 }
-void functNotdef(const char* name){
+void functRedecl(const char* name){
 	error = 1;
 	printf("##########Error at Line %d: ", linenum);
 	printf("%s ", name);
-	printf("is declared but not defined.##########\n");	
+	printf("is redeclared.##########\n");	
+}
+void functNotdef(string name){
+	error = 1;
+	printf("##########Error at Line %d: function ", linenum);
+	cout << name ;
+	//printf("%s ", name);
+	printf(" is declared but not defined.##########\n");	
 }
 void scalarTypeChaek(BTYPE t1){
 	if(t1 == INT_t || t1 == FLOAT_t || t1 == DOUBLE_t || t1 == STRING_t || t1 == BOOL_t){}

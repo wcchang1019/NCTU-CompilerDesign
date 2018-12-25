@@ -4,7 +4,8 @@
 #include <string.h>
 #include"datatype.h"
 #include"symtable.h"
-#include <vector>
+#include <set>
+#include <string>
 using namespace std;
 extern "C"
 {
@@ -17,16 +18,17 @@ extern char	*yytext;
 extern char buf[256];
 extern int Opt_SymTable;//declared in lex.l
 int scope = 0;//default is 0(global)
-int logical_expression_num = 0;
+//int logical_expression_num = 0;
+vector< int > logical_expression_num;
 int return_linenum[1000];
 BTYPE returnType[1000];
 int return_count = 0;
 vector< vector<BTYPE> > arrayVector;
 vector<BTYPE> arrayTmp;
 vector<BTYPE> arrayCheck;
-vector< pair<char *, int> > functVector;
+set< string > functVector;
 vector<BTYPE> functParam;
-bool loop = false;
+int loop = 0;
 struct SymTableList *symbolTableList;//create and initialize in main.c
 struct ExtType *funcReturnType;
 
@@ -135,6 +137,10 @@ struct ExtType *funcReturnType;
 
 program :  decl_list funct_def decl_and_def_list
 	{
+		for(auto i:functVector)
+		{
+			functNotdef(i);
+		}
 		if(Opt_SymTable == 1)
 			printSymTable(symbolTableList->global);
 		deleteLastSymTable(symbolTableList);
@@ -171,6 +177,7 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 					functDeclDefParamCheck(node->attr->funcParam->head, NULL);
 
 				}
+				if(functVector.find($2) != functVector.end()) {functVector.erase($2);}
 				free($2);
 			} compound_statement
 			{
@@ -196,6 +203,7 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 				}else{
 					functDeclDefParamCheck(node->attr->funcParam->head, attr->funcParam->head);
 				}
+				if(functVector.find($2) != functVector.end()) {functVector.erase($2);}
 		}
 		L_BRACE 
 			{//enter a new scope
@@ -239,7 +247,8 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 					insertTableNode(symbolTableList->global,newNode);
 				}else{
 					functDeclDefParamCheck(node->attr->funcParam->head, NULL);
-				}	
+				}
+				if(functVector.find($2) != functVector.end()) {functVector.erase($2);}
 				free($2);
 		}
 		  compound_statement{
@@ -264,6 +273,7 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 				}else{
 					functDeclDefParamCheck(node->attr->funcParam->head, attr->funcParam->head);
 				}
+				if(functVector.find($2) != functVector.end()) {functVector.erase($2);}
 		}
 		L_BRACE 
 			{//enter a new scope
@@ -297,36 +307,44 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 
 funct_decl : scalar_type ID L_PAREN R_PAREN SEMICOLON
 		{
+			bool tmp = false;
 			funcReturnType = createExtType($1,0,NULL);
 			struct SymTableNode *newNode = createFunctionNode($2,scope,funcReturnType,NULL);
-			redeclareCheck(symbolTableList->tail, newNode->name);
+			tmp = redeclareCheck(symbolTableList->tail, newNode->name);
 			insertTableNode(symbolTableList->global,newNode);
+			if(functVector.find($2) == functVector.end() && !tmp) {functVector.insert($2);}
 			free($2);
 		}
 	 	   | scalar_type ID L_PAREN parameter_list R_PAREN SEMICOLON
 		{
+			bool tmp = false;
 			funcReturnType = createExtType($1,0,NULL);
 			struct Attribute *attr = createFunctionAttribute($4);
 			struct SymTableNode *newNode = createFunctionNode($2,scope,funcReturnType,attr);
-			redeclareCheck(symbolTableList->tail, newNode->name);
+			tmp = redeclareCheck(symbolTableList->tail, newNode->name);
 			insertTableNode(symbolTableList->global,newNode);
+			if(functVector.find($2) == functVector.end() && !tmp){functVector.insert($2);}
 			free($2);
 		}
 		   | VOID ID L_PAREN R_PAREN SEMICOLON
 		{
+			bool tmp = false;
 			funcReturnType = createExtType(VOID_t,0,NULL);
 			struct SymTableNode *newNode = createFunctionNode($2,scope,funcReturnType,NULL);
-			redeclareCheck(symbolTableList->tail, newNode->name);	
+			tmp = redeclareCheck(symbolTableList->tail, newNode->name);	
 			insertTableNode(symbolTableList->global,newNode);
+			if(functVector.find($2) == functVector.end() && !tmp) {functVector.insert($2);}
 			free($2);
 		}
 		   | VOID ID L_PAREN parameter_list R_PAREN SEMICOLON
 		{
+			bool tmp = false;
 			funcReturnType = createExtType(VOID_t,0,NULL);
 			struct Attribute *attr = createFunctionAttribute($4);
 			struct SymTableNode *newNode = createFunctionNode($2,scope,funcReturnType,attr);
-			redeclareCheck(symbolTableList->tail, newNode->name);
+			tmp = redeclareCheck(symbolTableList->tail, newNode->name);
 			insertTableNode(symbolTableList->global,newNode);
+			if(functVector.find($2) == functVector.end() && !tmp) {functVector.insert($2);}
 			free($2);
 		}
 		   ;
@@ -384,7 +402,7 @@ var_decl : scalar_type identifier_list SEMICOLON
 			{
 				
 				newNode = createVariableNode(listNode->name,scope,listNode->type);
-				assignTypeCheck($1,listNode->type->baseType);
+				declAssignTypeCheck($1,listNode->type->baseType);
 				redeclareCheck(symbolTableList->tail, listNode->name);
 				if(listNode->type->isArray){
 					arrayDeclareCheck(arrayVector[0], listNode->type->dimArray, $1);
@@ -554,39 +572,40 @@ simple_statement :variable_reference ASSIGN_OP logical_expression SEMICOLON{assi
 conditional_statement : IF L_PAREN logical_expression R_PAREN
 			compound_statement	
 			ELSE
-			compound_statement {conditionalStatementBoolCheck($3, logical_expression_num);} |
-			IF L_PAREN logical_expression R_PAREN compound_statement{conditionalStatementBoolCheck($3, logical_expression_num);} 
+			compound_statement {conditionalStatementBoolCheck($3, logical_expression_num[int(logical_expression_num.size()-1)]); logical_expression_num.pop_back();} |
+			IF L_PAREN logical_expression R_PAREN compound_statement{conditionalStatementBoolCheck($3, logical_expression_num[int(logical_expression_num.size()-1)]); logical_expression_num.pop_back();}
 					  ;
 while_statement : WHILE
 		{//enter a new scope
 			++scope;
 			AddSymTable(symbolTableList);
-			loop = true;
+			loop++;
 		}
-		L_PAREN logical_expression R_PAREN{conditionalStatementBoolCheck($4, logical_expression_num);}
+		L_PAREN logical_expression R_PAREN{conditionalStatementBoolCheck($4, logical_expression_num[int(logical_expression_num.size()-1)]); logical_expression_num.pop_back();}
 		L_BRACE var_const_stmt_list R_BRACE
 		{	
 			if(Opt_SymTable == 1)
 				printSymTable(symbolTableList->tail);
 			deleteLastSymTable(symbolTableList);
 			--scope;
-			loop = false;
+			loop--;
 		}
 		| DO L_BRACE
 		{//enter a new scope
 			++scope;
 			AddSymTable(symbolTableList);
-			loop = true;
+			loop++;
 		}
 		var_const_stmt_list
 		 R_BRACE WHILE L_PAREN logical_expression R_PAREN SEMICOLON
 		{
-			conditionalStatementBoolCheck($8, logical_expression_num);
+			conditionalStatementBoolCheck($8, logical_expression_num[int(logical_expression_num.size()-1)]); 
+			logical_expression_num.pop_back();
 			if(Opt_SymTable == 1)
 				printSymTable(symbolTableList->tail);
 			deleteLastSymTable(symbolTableList);
 			--scope;
-			loop = false;
+			loop--;
 		}
 		;
 
@@ -594,13 +613,13 @@ for_statement : FOR
 		L_PAREN initial_expression_list SEMICOLON control_expression_list SEMICOLON increment_expression_list R_PAREN 
 		L_BRACE		
 		{//enter a new scope
-			loop = true;
+			loop++;
 			++scope;
 			AddSymTable(symbolTableList);
 		} 
 		var_const_stmt_list R_BRACE
 		{
-			loop = false;
+			loop--;
 			if(Opt_SymTable == 1)
 				printSymTable(symbolTableList->tail);
 			deleteLastSymTable(symbolTableList);
@@ -665,10 +684,10 @@ variable_reference : array_list{$$ = $1;}
 
 
 logical_expression : logical_expression OR_OP logical_term{ 
-				logical_expression_num = linenum;					
+				logical_expression_num.push_back(linenum);					
 				$$ = boolTypeCheck($1, $3);}
 				   | logical_term{ 
-				logical_expression_num = linenum;
+				logical_expression_num.push_back(linenum);
 				$$ = $1;}
 				   ;
 

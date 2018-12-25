@@ -1,7 +1,7 @@
 #pragma source off
 #pragma token off
 #pragma statistic off
-#pragma symbol on
+//#pragma symbol on
 
 void whilefor()
 {
@@ -16,6 +16,14 @@ void whilefor()
     			int x;
     		}
     	}
+        while(1){
+            if(11){
+
+            
+            }
+            break;
+        }
+        break;
     }
 
     do{

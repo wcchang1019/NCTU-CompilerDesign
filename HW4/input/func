@@ -3,12 +3,23 @@
 #pragma statistic off
 //#pragma symbol on
 int func(int a[1][11], int b[1]);
-int fool();
-int abc();
-int efg(int a, int b);
 int func(int ii[1][11], int b[1]){
-	int ii;
-	b();
+	int a, c = 5;
+	abc(5, 6);
 	return 11;
 	return 5888;
+}
+int func();
+
+
+
+
+
+int f1(){
+	return 1;
+}
+
+int f2(){
+	f1();
+	return 3;
 }

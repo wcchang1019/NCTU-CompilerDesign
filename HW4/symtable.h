@@ -1,5 +1,6 @@
 #include"datatype.h"
 #include<vector>
+#include<string>
 using namespace std;
 int initSymTableList(struct SymTableList *list);
 int destroySymTableList(struct SymTableList *list);
@@ -47,18 +48,20 @@ BTYPE modTypeCheck(BTYPE t1, BTYPE t2);
 BTYPE boolTypeCheck(BTYPE t1, BTYPE t2);
 BTYPE checkIDdect(struct SymTable* table, const char* name);
 void assignTypeCheck(BTYPE t1, BTYPE t2);
+void declAssignTypeCheck(BTYPE t1, BTYPE t2);
 void printBTYPE(BTYPE t1);
 bool arrayDimCheck(BTYPE t1);
-void redeclareCheck(struct SymTable* table, const char* name);
+bool redeclareCheck(struct SymTable* table, const char* name);
 void conditionalStatementBoolCheck(BTYPE t1, int logical_expression_num);
-void breakContinueCheck(bool loop);
+void breakContinueCheck(int loop);
 void functDeclDefParamCheck(struct FuncAttrNode *attr1, struct FuncAttrNode *attr2);
 void returnTypeCheck(BTYPE t1, BTYPE returnType[1000], int return_linenum[1000], int return_count);
 void arrayDeclareCheck(vector<BTYPE> v1, struct ArrayDimNode* dimNode, BTYPE t1);
 bool arrayIndexCheck(BTYPE t1);
 void functRedef(const char* name);
+void functRedecl(const char* name);
 BTYPE arrayNameCheck(struct SymTable* table, const char* name, vector< BTYPE > arrayCheck);
-void functNotdef(const char* name);
+void functNotdef(string name);
 void scalarTypeChaek(BTYPE t1);
 BTYPE functNoParamInvokeCheck(struct SymTable* table, const char* name);
 BTYPE functParamInvokeCheck(struct SymTable* table, const char* name, vector<BTYPE> v);
