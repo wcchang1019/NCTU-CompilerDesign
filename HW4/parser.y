@@ -163,7 +163,7 @@ decl_and_def_list : decl_and_def_list var_decl
 
 funct_def : scalar_type ID L_PAREN R_PAREN 
 			{
-
+				
 				funcReturnType = createExtType($1,0,NULL);
 				struct SymTableNode *node;
 				node = findFuncDeclaration(symbolTableList->global,$2);
@@ -173,11 +173,11 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 					struct SymTableNode *newNode = createFunctionNode($2,scope,funcReturnType,NULL);
 					insertTableNode(symbolTableList->global,newNode);
 				}else{
-
-					functDeclDefParamCheck(node->attr->funcParam->head, NULL);
-
+					if(node->attr != NULL){functDeclDefNoParamError($2);}
 				}
+				
 				if(functVector.find($2) != functVector.end()) {functVector.erase($2);}
+				
 				free($2);
 			} compound_statement
 			{
@@ -201,7 +201,8 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 					struct SymTableNode *newNode = createFunctionNode($2,scope,funcReturnType,attr);
 					insertTableNode(symbolTableList->global,newNode);
 				}else{
-					functDeclDefParamCheck(node->attr->funcParam->head, attr->funcParam->head);
+					if(node->attr == NULL){functDeclDefParamError($2);}
+					else functDeclDefParamCheck(node->attr->funcParam->head, attr->funcParam->head);
 				}
 				if(functVector.find($2) != functVector.end()) {functVector.erase($2);}
 		}
@@ -246,7 +247,7 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 					struct SymTableNode *newNode = createFunctionNode($2,scope,funcReturnType,NULL);
 					insertTableNode(symbolTableList->global,newNode);
 				}else{
-					functDeclDefParamCheck(node->attr->funcParam->head, NULL);
+					if(node->attr != NULL){functDeclDefNoParamError($2);}
 				}
 				if(functVector.find($2) != functVector.end()) {functVector.erase($2);}
 				free($2);
@@ -271,7 +272,8 @@ funct_def : scalar_type ID L_PAREN R_PAREN
 					struct SymTableNode *newNode = createFunctionNode($2,scope,funcReturnType,attr);
 					insertTableNode(symbolTableList->global,newNode);
 				}else{
-					functDeclDefParamCheck(node->attr->funcParam->head, attr->funcParam->head);
+					if(node->attr == NULL){functDeclDefParamError($2);}
+					else functDeclDefParamCheck(node->attr->funcParam->head, attr->funcParam->head);
 				}
 				if(functVector.find($2) != functVector.end()) {functVector.erase($2);}
 		}

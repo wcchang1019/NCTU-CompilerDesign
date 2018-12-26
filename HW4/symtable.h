@@ -55,6 +55,8 @@ bool redeclareCheck(struct SymTable* table, const char* name);
 void conditionalStatementBoolCheck(BTYPE t1, int logical_expression_num);
 void breakContinueCheck(int loop);
 void functDeclDefParamCheck(struct FuncAttrNode *attr1, struct FuncAttrNode *attr2);
+void functDeclDefNoParamError(const char* name);
+void functDeclDefParamError(const char* name);
 void returnTypeCheck(BTYPE t1, BTYPE returnType[1000], int return_linenum[1000], int return_count);
 void arrayDeclareCheck(vector<BTYPE> v1, struct ArrayDimNode* dimNode, BTYPE t1);
 bool arrayIndexCheck(BTYPE t1);

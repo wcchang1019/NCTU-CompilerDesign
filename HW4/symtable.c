@@ -990,6 +990,7 @@ void functDeclDefParamCheck(struct FuncAttrNode *attr1, struct FuncAttrNode *att
 	struct ArrayDimNode* dim2;
 	if(attr1 != NULL && attr2 != NULL)
 	{
+		
 		do
 		{
 			if(attr1->value->baseType == attr2->value->baseType)
@@ -1042,6 +1043,22 @@ void functDeclDefParamCheck(struct FuncAttrNode *attr1, struct FuncAttrNode *att
 		printf("Declaration and definition's parameter are not matched.");
 		printf("##########\n");
 	}
+}
+void functDeclDefNoParamError(const char* name)
+{
+	error = 1;
+	printf("##########Error at Line %d: ", linenum);
+	printf("function %s need some parameter.", name);
+	printf("##########\n");
+
+}
+void functDeclDefParamError(const char* name)
+{
+	error = 1;
+	printf("##########Error at Line %d: ", linenum);
+	printf("function %s shouldn't have any parameter.", name);
+	printf("##########\n");
+
 }
 void returnTypeCheck(BTYPE t1, BTYPE returnType[1000], int return_linenum[1000], int return_count)
 {

@@ -11,4 +11,4 @@ int main()
 float a[5] = {1.1, 2.2, 3.0, 4.0, 7.1};
 bool b = true;
 bool d = false;
-bool a[2][2][2] = { true, false, true, true, false, true, d&&b, d||b};
+bool c[2][2][2] = { true, false, true, true, false, true, d&&b, 11};

@@ -3,7 +3,7 @@
 #pragma statistic off
 int main()
 {
-        int a,b;
+        float a,b;
         float d;
 
         a = 1+2*3+4;
