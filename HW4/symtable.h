@@ -67,3 +67,4 @@ void functNotdef(string name);
 void scalarTypeChaek(BTYPE t1);
 BTYPE functNoParamInvokeCheck(struct SymTable* table, const char* name);
 BTYPE functParamInvokeCheck(struct SymTable* table, const char* name, vector<BTYPE> v);
+void forControlCheck(BTYPE t1);

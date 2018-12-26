@@ -643,9 +643,9 @@ control_expression_list : control_expression
 			|
 		  	;
 
-control_expression : control_expression COMMA variable_reference ASSIGN_OP logical_expression{assignTypeCheck($1, $3);}
-				   | control_expression COMMA logical_expression
-				   | logical_expression
+control_expression : control_expression COMMA variable_reference ASSIGN_OP logical_expression{assignTypeCheck($3, $5);}
+				   | control_expression COMMA logical_expression{forControlCheck($3);}
+				   | logical_expression{forControlCheck($1);}
 				   |variable_reference ASSIGN_OP logical_expression{assignTypeCheck($1, $3);}
 				   ;
 

@@ -1326,7 +1326,14 @@ BTYPE functParamInvokeCheck(struct SymTable* table, const char* name, vector<BTY
 		printf("parameter type does not match.##########\n");
 	}
 	return unknown;
+}
+void forControlCheck(BTYPE t1){
+	if(t1 != BOOL_t){
+		error = 1;
+		printf("##########Error at Line %d: ", linenum);
+		printf("The control expression in For must be bool type.##########\n");
 
+	}
 
 
 }
